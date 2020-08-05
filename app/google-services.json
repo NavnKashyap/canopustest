@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "836585226361",
+    "firebase_url": "https://triple-backbone-285507.firebaseio.com",
+    "project_id": "triple-backbone-285507",
+    "storage_bucket": "triple-backbone-285507.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:836585226361:android:4952512ffbe3f549cad4a8",
+        "android_client_info": {
+          "package_name": "com.testapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "836585226361-hfaakkqgssr9il042qg72ql54k5n6b5o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.testapp",
+            "certificate_hash": "105b6ae2ed569d293b82ad1f170f299b611aa49a"
+          }
+        },
+        {
+          "client_id": "836585226361-rvmikom96pp8p0baq7jino5ma08ns5sm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCok0xFYMdi2ZPusIQAAa4JF4viqp-t6zw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "836585226361-rvmikom96pp8p0baq7jino5ma08ns5sm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
