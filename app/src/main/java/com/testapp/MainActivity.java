@@ -6,12 +6,16 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -21,10 +25,24 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.testapp.dto.LocationDTO;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
     View view;
@@ -33,15 +51,23 @@ public class MainActivity extends AppCompatActivity {
     private GoogleMap googleMap;
     Context mContext;
     private ArrayList<MarkerOptions> optionsList = new ArrayList<>();
-    private static ArrayList<LocationDTO> locationDTOS ;
+    private static ArrayList<LocationDTO> locationDTOS;
     private Hashtable<String, LocationDTO> markers;
+
+    private FusedLocationProviderClient mFusedLocationClient;
+
+    String wayLatitude="",wayLongitude="",MY_API_KEY="AIzaSyCbaiX1KWzgt7nvNKT4HRBKr5zVzpbvQwI";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mContext= MainActivity.this;
-        mMapView=(MapView)findViewById(R.id.mapView);
+        mContext = MainActivity.this;
+        mMapView = (MapView) findViewById(R.id.mapView);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        requestLocationUpdates();
+
 
         mMapView.onCreate(savedInstanceState);
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -87,14 +113,46 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void requestLocationUpdates() {
+
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mFusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
+            if (location != null) {
+                wayLatitude = String.valueOf(location.getLatitude());
+                wayLongitude = String.valueOf(location.getLongitude());
+                Log.e("TAG", "onCreate: "+wayLatitude+"--------"+wayLongitude );
+
+
+
+                if (NetworkManager.isConnectToInternet(mContext)) {
+
+                    addData();
+
+
+                } else {
+
+                }
+            }
+        });
+
+    }
+
     private void addData() {
         locationDTOS = new ArrayList<LocationDTO>();
 
-        locationDTOS.add(new LocationDTO("22.7454534"," 75.8935588","JadeBlue"));
-        locationDTOS.add(new LocationDTO("22.750702"," 75.8948628","Nagar Nigam"));
-        locationDTOS.add(new LocationDTO("22.7443792"," 75.8720681","Post Office"));
-        locationDTOS.add(new LocationDTO("22.7423607"," 75.8727547","DNS Hospital"));
-        locationDTOS.add(new LocationDTO("22.7226112"," 75.8855428","Varda Vihar"));
+        locationDTOS.add(new LocationDTO("22.7454534","75.8935588","JadeBlue"));
+        locationDTOS.add(new LocationDTO(wayLatitude,wayLongitude,"Varda Vihar"));
 
         for (int i = 0; i < locationDTOS.size(); i++) {
 
@@ -126,14 +184,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         mMapView.onResume();
 
-        if (NetworkManager.isConnectToInternet(mContext)) {
 
-            addData();
-
-
-        } else {
-
-        }
 
     }
 
@@ -195,6 +246,10 @@ public class MainActivity extends AppCompatActivity {
 
                 for (MarkerOptions options : optionsList) {
 
+
+
+
+
                     options.position(options.getPosition());
                     options.title(options.getTitle());
                     options.snippet(options.getSnippet());
@@ -205,99 +260,295 @@ public class MainActivity extends AppCompatActivity {
                                     CameraPosition cameraPositio1n = new CameraPosition.Builder().target(options.getPosition()).zoom(12).build();
                                     googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPositio1n));
 
-                    for (int i = 0; i < locationDTOS.size(); i++) {
 
-                        markers.put(hamburg.getId(), locationDTOS.get(i));
-                         CameraPosition cameraPosition = new CameraPosition.Builder().target(options.getPosition()).zoom(12).build();
-                         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-                        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
-                    }
-                }
 
-                googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-                    @Override
-                    public boolean onMarkerClick(final Marker marker) {
 
-                        marker.showInfoWindow();
+                        LatLng origin =  new LatLng(Double.parseDouble(locationDTOS.get(0).getLatitude()), Double.parseDouble(locationDTOS.get(0).getLongitude()));
+                        LatLng dest =  new LatLng(Double.parseDouble(locationDTOS.get(0).getLatitude()), Double.parseDouble(locationDTOS.get(0).getLongitude()));
 
-                        final Handler handler = new Handler();
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                marker.showInfoWindow();
+                        // Getting URL to the Google Directions API
+                        String url = getDirectionsUrl(origin, dest);
+                        Log.d("onMapClick", url.toString());
+                        FetchUrl fetchUrl = new FetchUrl();
 
-                            }
-                        }, 200);
-
-                        return false;
-                    }
-                });
-
-                googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-
-                    @Override
-                    public void onInfoWindowClick(Marker arg0) {
+                        // Start downloading json data from Google Directions API
+                        fetchUrl.execute(url);
+                        //move map camera
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(origin));
+                        mMap.animateCamera(CameraUpdateFactory.zoomTo(11));
 
                     }
-                });
 
 
             }
         });
 
 
+
+
+
+
     }
 
 
-    class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
+    private String getDirectionsUrl(LatLng origin, LatLng dest) {
 
-        private View view;
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
 
-        public CustomInfoWindowAdapter() {
-            view = getLayoutInflater().inflate(R.layout.custom_info_window,
-                    null);
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
 
-        }
+        // Sensor enabled
+        String sensor = "sensor=false";
+        String mode = "mode=driving";
 
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&" + mode;
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters+ "&key=" + MY_API_KEY;
+
+
+        return url;
+    }
+
+
+
+
+    private class FetchUrl extends AsyncTask<String, Void, String> {
 
         @Override
-        public View getInfoContents(Marker marker) {
+        protected String doInBackground(String... url) {
 
-            if (marker != null
-                    && marker.isInfoWindowShown()) {
-                marker.hideInfoWindow();
-                marker.showInfoWindow();
+            // For storing data from web service
+            String data = "";
+
+            try {
+                // Fetching the data from web service
+                data = downloadUrl(url[0]);
+                Log.d("Background Task data", data.toString());
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
             }
-            return null;
+            return data;
         }
 
         @Override
-        public View getInfoWindow(Marker marker) {
-            marker = marker;
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
 
-            String name = null;
+            ParserTask parserTask = new ParserTask();
 
-            if (marker.getId() != null && markers != null && markers.size() > 0) {
-                if (markers.get(marker.getId()) != null &&
-                        markers.get(marker.getId()) != null) {
+            // Invokes the thread for parsing the JSON data
+            parserTask.execute(result);
 
-                    name = markers.get(marker.getId()).getName();
+        }
+    }
+
+
+    private String downloadUrl(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+            Log.d("downloadUrl", data.toString());
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+
+
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                Log.d("ParserTask",jsonData[0].toString());
+                DataParser parser = new DataParser();
+                Log.d("ParserTask", parser.toString());
+
+                // Starts parsing data
+                routes = parser.parse(jObject);
+                Log.d("ParserTask","Executing routes");
+                Log.d("ParserTask",routes.toString());
+
+            } catch (Exception e) {
+                Log.d("ParserTask",e.toString());
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        // Executes in UI thread, after the parsing process
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points;
+            PolylineOptions lineOptions = null;
+
+            // Traversing through all the routes
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<>();
+                lineOptions = new PolylineOptions();
+
+                // Fetching i-th route
+                List<HashMap<String, String>> path = result.get(i);
+
+                // Fetching all the points in i-th route
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
                 }
+
+                // Adding all the points in the route to LineOptions
+                lineOptions.addAll(points);
+                lineOptions.width(10);
+                lineOptions.color(Color.RED);
+
+                Log.d("onPostExecute","onPostExecute lineoptions decoded");
+
+            }
+
+            // Drawing polyline in the Google Map for the i-th route
+            if(lineOptions != null) {
+                googleMap.addPolyline(lineOptions);
+            }
+            else {
+                Log.d("onPostExecute","without Polylines drawn");
+            }
+        }
+    }
+
+
+    class DataParser {
+
+        List<List<HashMap<String,String>>> parse(JSONObject jObject){
+
+            List<List<HashMap<String, String>>> routes = new ArrayList<>() ;
+            JSONArray jRoutes;
+            JSONArray jLegs;
+            JSONArray jSteps;
+
+            try {
+
+                jRoutes = jObject.getJSONArray("routes");
+
+                /** Traversing all routes */
+                for(int i=0;i<jRoutes.length();i++){
+                    jLegs = ( (JSONObject)jRoutes.get(i)).getJSONArray("legs");
+                    List path = new ArrayList<>();
+
+                    /** Traversing all legs */
+                    for(int j=0;j<jLegs.length();j++){
+                        jSteps = ( (JSONObject)jLegs.get(j)).getJSONArray("steps");
+
+                        /** Traversing all steps */
+                        for(int k=0;k<jSteps.length();k++){
+                            String polyline = "";
+                            polyline = (String)((JSONObject)((JSONObject)jSteps.get(k)).get("polyline")).get("points");
+                            List<LatLng> list = decodePoly(polyline);
+
+                            /** Traversing all points */
+                            for(int l=0;l<list.size();l++){
+                                HashMap<String, String> hm = new HashMap<>();
+                                hm.put("lat", Double.toString((list.get(l)).latitude) );
+                                hm.put("lng", Double.toString((list.get(l)).longitude) );
+                                path.add(hm);
+                            }
+                        }
+                        routes.add(path);
+                    }
+                }
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }catch (Exception e){
             }
 
 
-            //final String title = marker.getTitle();
-            final TextView titleUi = ((TextView) view.findViewById(R.id.title));
-            if (name != null) {
-                titleUi.setText(name);
-            } else {
-                titleUi.setText("");
+            return routes;
+        }
+
+
+        /**
+         * Method to decode polyline points
+         * */
+        private List<LatLng> decodePoly(String encoded) {
+
+            List<LatLng> poly = new ArrayList<>();
+            int index = 0, len = encoded.length();
+            int lat = 0, lng = 0;
+
+            while (index < len) {
+                int b, shift = 0, result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lat += dlat;
+
+                shift = 0;
+                result = 0;
+                do {
+                    b = encoded.charAt(index++) - 63;
+                    result |= (b & 0x1f) << shift;
+                    shift += 5;
+                } while (b >= 0x20);
+                int dlng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+                lng += dlng;
+
+                LatLng p = new LatLng((((double) lat / 1E5)),
+                        (((double) lng / 1E5)));
+                poly.add(p);
             }
 
-
-            return view;
+            return poly;
         }
     }
 }
